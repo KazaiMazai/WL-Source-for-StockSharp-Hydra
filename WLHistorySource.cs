@@ -24,15 +24,15 @@ namespace Yahoo
       class WLHistorySource : BaseHistorySource
       {
             private  List<string> _errorSecurititesList = new List<string>();
-
+          private string _tickersFileName = "\\WLSourceTickers.txt";
           
           private RoadRunner _roadRunner = new RoadRunner();
 
           public WLHistorySource(ISecurityStorage securityStorage) : base(securityStorage)
           {
-             
 
-              string filepath = Directory.GetCurrentDirectory() + "\\WLSourceTickers.txt";
+
+              string filepath = Directory.GetCurrentDirectory() + _tickersFileName;
 
               var fileInfo = new FileInfo(filepath);
               if (!fileInfo.Exists)
@@ -179,7 +179,7 @@ namespace Yahoo
           public List<Security> GetSecuritiesFromTxt()
           {
               var securities = new List<Security>();
-              string filepath = Directory.GetCurrentDirectory() + "\\YahooGoogleSourceTickers.txt";
+              string filepath = Directory.GetCurrentDirectory() + _tickersFileName;
 
               var fileInfo = new FileInfo(filepath);
               if (!fileInfo.Exists)
@@ -254,7 +254,7 @@ namespace Yahoo
                           security.MinStepSize = 0.01m;
                           security.ShortName = code;
                           security.Code = code;
-                          security.Class = "YahooGoogleSource";
+                          security.Class = "WLSource";
                           security.ExtensionInfo = new Dictionary<object, object>();
  
                         

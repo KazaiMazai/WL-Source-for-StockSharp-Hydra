@@ -30,6 +30,30 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ecng.Collections">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\Ecng.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Ecng.Common">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\Ecng.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="Ecng.ComponentModel">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\Ecng.ComponentModel.dll</HintPath>
+    </Reference>
+    <Reference Include="Ecng.Serialization">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\Ecng.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="StockSharp.Algo">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\StockSharp.Algo.dll</HintPath>
+    </Reference>
+    <Reference Include="StockSharp.BusinessEntities">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\StockSharp.BusinessEntities.dll</HintPath>
+    </Reference>
+    <Reference Include="StockSharp.Hydra.Core">
+      <HintPath>..\..\..\S#\Hydra 4.1.16.1\StockSharp.Hydra.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="StockSharp.Logging">
+      <HintPath>..\..\..\S#\StockSharp_4.1.15_Sources\References\StockSharp.Logging.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -45,8 +69,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WLHistorySource.cs" />
+    <Compile Include="WLSecurityStorage.cs" />
+    <Compile Include="WLSource.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
