@@ -1,6 +1,8 @@
-﻿using Yahoo;
+﻿using StockSharp.Algo;
+using StockSharp.Algo.Storages;
 
-namespace StockSharp.Hydra.Yahoo
+
+namespace StockSharp.Hydra.WLDataSource
 {
     using System;
     using System.Collections.Generic;
@@ -9,47 +11,63 @@ namespace StockSharp.Hydra.Yahoo
     using Ecng.Collections;
 
     using StockSharp.Algo.History;
-    using StockSharp.Algo.History.Finam;
+  
     using StockSharp.BusinessEntities;
     using StockSharp.Hydra.Core;
 
-    class WLSecurityStorage : ISecurityStorage
+  public  class WLSecurityStorage : ISecurityStorage
     {
-        private readonly ISecurityStorage _underlyingStorage;
+        private readonly IEntityRegistry _entityRegistry;
         private readonly SynchronizedDictionary<string, Security> _cacheById = new SynchronizedDictionary<string, Security>();
 
+        private IEnumerable<Security> _securities;
         public IEnumerable<Security> WLSecurities { get { return _cacheById.Values; } }
 
-        public WLSecurityStorage(ISecurityStorage underlyingStorage, HydraEntityRegistry entityRegistry)
-        {
-            if (underlyingStorage == null)
-                throw new ArgumentNullException("underlyingStorage");
+      
 
-            
+
+        public WLSecurityStorage(IEntityRegistry entityRegistry)
+        {
+            if (entityRegistry == null)
+                throw new ArgumentNullException("entityRegistry");
+
+            _entityRegistry = entityRegistry;
 
             foreach (var security in entityRegistry.Securities)
                 TryAddToCache(security);
 
-            _underlyingStorage = underlyingStorage;
+             
         }
 
         public Security LoadBy(string fieldName, object fieldValue)
         {
-            if (fieldName.CompareIgnoreCase("Id"))
-                return _underlyingStorage.LoadBy(fieldName, fieldValue);
+            
+            if (StringHelper.CompareIgnoreCase(fieldName, "Id"))
+                return CollectionHelper.TryGetValue<string, Security>((IDictionary<string, Security>)this._cacheById, (string)fieldValue);
+            else
+                return _entityRegistry.Securities.LoadBy(fieldName, fieldValue);
 
-            return _cacheById.TryGetValue((string)fieldValue);
+             
+
+           
         }
 
         public IEnumerable<Security> Lookup(Security criteria)
         {
-            return new[] { criteria };
+            throw new NotSupportedException();
+        }
 
+        public IEnumerable<Security> Securities
+        {
+            get
+            {
+                return (IEnumerable<Security>)_entityRegistry.Securities;
+            }
         }
 
         public void Save(Security security)
         {
-            _underlyingStorage.Save(security);
+            _entityRegistry.Securities.Save(security);
             TryAddToCache(security);
         }
 

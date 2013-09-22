@@ -11,7 +11,7 @@ using StockSharp;
 using StockSharp.Algo;
 using StockSharp.Algo.Candles;
 using StockSharp.Algo.History;
-using StockSharp.Algo.History.Finam;
+
 using StockSharp.BusinessEntities;
 using StockSharp.Hydra;
 using StockSharp.Hydra.Core;
@@ -19,20 +19,25 @@ using StockSharp.Logging;
 using WealthLab;
 using WealthLab.DataProviders.Common;
 
-namespace Yahoo
+namespace StockSharp.Hydra.WLDataSource
 {
-      class WLHistorySource : BaseHistorySource
+     public  class WLHistorySource : BaseHistorySource
       {
-            private  List<string> _errorSecurititesList = new List<string>();
-          private string _tickersFileName = "\\WLSourceTickers.txt";
-          
-          private RoadRunner _roadRunner = new RoadRunner();
+          private  List<string> _errorSecurititesList = new List<string>();
+
+          private DateTime _cachedBeginDate ;
+          private DateTime _cachedEndDate;
+          private Security _cachedSecurity;
+          private TimeSpan _cachedTimeframe;
+          private List<TimeFrameCandle> _cachedCandleList;
+          private DateTime _lastUpdate;
+
+          private static RoadRunner _roadRunner;
 
           public WLHistorySource(ISecurityStorage securityStorage) : base(securityStorage)
           {
-
-
-              string filepath = Directory.GetCurrentDirectory() + _tickersFileName;
+              var securities = new List<Security>();
+              string filepath = Directory.GetCurrentDirectory() + "\\WLSourceTickers.txt";
 
               var fileInfo = new FileInfo(filepath);
               if (!fileInfo.Exists)
@@ -41,43 +46,43 @@ namespace Yahoo
                   
               }
 
-            
+              _roadRunner = new RoadRunner();
 
           }
 
           private void SetRoadRunnerTimeFrame(TimeSpan timeFrame)
           {
 
-            
-              if (timeFrame.TotalSeconds == TimeSpan.FromDays(1).TotalSeconds)
+
+              if (timeFrame == TimeSpan.FromDays(1.0))
               {
-                  _roadRunner.Scale= BarScale.Daily;
+                  _roadRunner.Scale = BarScale.Daily;
                   _roadRunner.BarInterval = 1;
 
               }
               else
-                  if (timeFrame.TotalSeconds == TimeSpan.FromHours(1).TotalSeconds)
+                  if (timeFrame == TimeSpan.FromHours(1.0))
                   {
                       _roadRunner.Scale = BarScale.Minute;
                       _roadRunner.BarInterval = 60;
 
                   }
                   else
-                      if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(30).TotalSeconds)
+                      if (timeFrame == TimeSpan.FromMinutes(30.0))
                       {
                           _roadRunner.Scale = BarScale.Minute;
                           _roadRunner.BarInterval = 30;
 
                       }
                       else
-                          if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(15).TotalSeconds)
+                          if (timeFrame == TimeSpan.FromMinutes(15.0))
                           {
                               _roadRunner.Scale = BarScale.Minute;
                               _roadRunner.BarInterval = 15;
 
                           }
                           else
-                              if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(10).TotalSeconds)
+                              if (timeFrame == TimeSpan.FromMinutes(10.0))
                               {
                                   _roadRunner.Scale = BarScale.Minute;
                                   _roadRunner.BarInterval = 10;
@@ -85,75 +90,75 @@ namespace Yahoo
                               }
                               else
 
-                              if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(5).TotalSeconds)
-                              {
-                                  _roadRunner.Scale = BarScale.Minute;
-                                  _roadRunner.BarInterval = 5;
-
-                              }
-                              else
-                                  if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(3).TotalSeconds)
+                                  if (timeFrame == TimeSpan.FromMinutes(5.0))
                                   {
                                       _roadRunner.Scale = BarScale.Minute;
-                                      _roadRunner.BarInterval = 3;
+                                      _roadRunner.BarInterval = 5;
 
                                   }
                                   else
-                                      if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(2).TotalSeconds)
+                                      if (timeFrame == TimeSpan.FromMinutes(3.0))
                                       {
                                           _roadRunner.Scale = BarScale.Minute;
-                                          _roadRunner.BarInterval = 2;
+                                          _roadRunner.BarInterval = 3;
 
                                       }
                                       else
-                                          if (timeFrame.TotalSeconds == TimeSpan.FromMinutes(1).TotalSeconds)
+                                          if (timeFrame == TimeSpan.FromMinutes(2.0))
                                           {
                                               _roadRunner.Scale = BarScale.Minute;
-                                              _roadRunner.BarInterval = 1;
+                                              _roadRunner.BarInterval = 2;
 
                                           }
-                                       else throw new ArgumentException("TimeFrame для исторических данных не поддерживается.");
-              
+                                          else
+                                              if (timeFrame == TimeSpan.FromMinutes(1.0))
+                                              {
+                                                  _roadRunner.Scale = BarScale.Minute;
+                                                  _roadRunner.BarInterval = 1;
 
-              
+                                              }
+                                              else throw new ArgumentException("TimeFrame для исторических данных не поддерживается.");
+
+
+
 
           }
-          
-          public IEnumerable<Candle> GetCandles(Security security, DateTime beginDate,DateTime endDate,TimeSpan timeframe)
+
+          public IEnumerable<Candle> GetCandles(Security security, DateTime beginDate, DateTime endDate, TimeSpan timeframe)
           {
-               
-                  var candleList = new List<TimeFrameCandle>();
 
-                  if (_errorSecurititesList.Any(c => c == security.Id)) return candleList;
+              var candleList = new List<TimeFrameCandle>();
 
-
-                  SetRoadRunnerTimeFrame(timeframe);
-                  _roadRunner.StartDate = beginDate;
-                  _roadRunner.EndDate = endDate;
-
-                var wlBars =  _roadRunner.RequestHistoricalData(security.Code);
-                  for (int i = 0; i < wlBars.Count; i++)
-                  {
-                      var candle = new TimeFrameCandle();
-                      candle.OpenTime = wlBars.Date[i] - timeframe;
-                      candle.CloseTime = wlBars.Date[i];
-
-                      candle.OpenPrice = (decimal) wlBars.Open[i];
-                      candle.HighPrice = (decimal)wlBars.High[i];
-                      candle.LowPrice = (decimal)wlBars.Low[i];
-                      candle.ClosePrice = (decimal)wlBars.Close[i];
-                      candle.TotalVolume = (decimal) wlBars.Volume[i];
+              if (_errorSecurititesList.Any(c => c == security.Id)) return candleList;
 
 
-                      candle.TimeFrame = timeframe;
-                      candle.Security = security;
+              SetRoadRunnerTimeFrame(timeframe);
+              _roadRunner.StartDate = beginDate;
+              _roadRunner.EndDate = endDate;
 
-                      candleList.Add(candle);
+              var wlBars = _roadRunner.RequestHistoricalData(security.Code);
+              for (int i = 0; i < wlBars.Count; i++)
+              {
+                  var candle = new TimeFrameCandle();
+                  candle.OpenTime = wlBars.Date[i] - timeframe;
+                  candle.CloseTime = wlBars.Date[i];
+
+                  candle.OpenPrice = (decimal) Math.Round(wlBars.Open[i], 2, MidpointRounding.ToEven);
+                  candle.HighPrice = (decimal)Math.Round(wlBars.High[i], 2, MidpointRounding.ToEven);
+                  candle.LowPrice = (decimal)Math.Round(wlBars.Low[i], 2, MidpointRounding.ToEven);
+                  candle.ClosePrice = (decimal)Math.Round(wlBars.Close[i], 2, MidpointRounding.ToEven);
+                  candle.TotalVolume = (decimal)Math.Round(wlBars.Volume[i], 2, MidpointRounding.ToEven);
 
 
-                  }
-                 
-                  
+                  candle.TimeFrame = timeframe;
+                  candle.Security = security;
+
+                  candleList.Add(candle);
+
+
+              }
+
+
               return candleList;
 
           }
@@ -161,11 +166,10 @@ namespace Yahoo
           public ExchangeBoard GetSmartExchangeBoard()
           {
 
-              var exchangeBoard = ExchangeBoard.GetOrCreateBoard("SMART", code => new ExchangeBoard
+              var exchangeBoard = ExchangeBoard.GetOrCreateBoard("SMART", notExistingExchangeBoardCode => new ExchangeBoard
               {
-
-                  Exchange = new Exchange { Name = "SMART Routing", EngName = "SMART Routing", RusName = "Смарт роутинг", TimeZoneInfo = Exchange.Nasdaq.TimeZoneInfo },
-                  Code = code,
+                  Exchange = new Exchange {Name = notExistingExchangeBoardCode + " Exchange", EngName = notExistingExchangeBoardCode + " Exchange", RusName = notExistingExchangeBoardCode + " по-русски" },
+                  Code = notExistingExchangeBoardCode,
                   IsSupportAtomicReRegister = true,
                   IsSupportMarketOrders = true,
                   WorkingTime = ExchangeBoard.Nasdaq.WorkingTime
@@ -176,10 +180,10 @@ namespace Yahoo
 
           }
 
-          public List<Security> GetSecuritiesFromTxt()
+          private List<Security> GetSecuritiesFromTxt()
           {
               var securities = new List<Security>();
-              string filepath = Directory.GetCurrentDirectory() + _tickersFileName;
+              string filepath = Directory.GetCurrentDirectory() + "\\WLSourceTickers.txt";
 
               var fileInfo = new FileInfo(filepath);
               if (!fileInfo.Exists)
@@ -210,37 +214,14 @@ namespace Yahoo
                       var security = SecurityStorage.LoadBy("Id", securityId);
                       if(security==null)
                       {
-                          ExchangeBoard exchangeBoard;
-
-                          if (exchangeBoardCode == "SMART") exchangeBoard = GetSmartExchangeBoard();
-
-                          else
+                          var exchangeBoard = ExchangeBoard.GetOrCreateBoard(exchangeBoardCode, notExistingExchangeBoardCode => new ExchangeBoard
                           {
-                              exchangeBoard = ExchangeBoard.GetOrCreateBoard(exchangeBoardCode,
-                                                                             notExistingExchangeBoardCode =>
-                                                                             new ExchangeBoard
-                                                                                 {
-                                                                                     Exchange =
-                                                                                         new Exchange
-                                                                                             {
-                                                                                                 Name =
-                                                                                                     notExistingExchangeBoardCode +
-                                                                                                     " Exchange",
-                                                                                                 EngName =
-                                                                                                     notExistingExchangeBoardCode +
-                                                                                                     " Exchange",
-                                                                                                 RusName =
-                                                                                                     notExistingExchangeBoardCode +
-                                                                                                     " по-русски"
-                                                                                             },
-                                                                                     Code = notExistingExchangeBoardCode,
-                                                                                     IsSupportAtomicReRegister = true,
-                                                                                     IsSupportMarketOrders = true,
-                                                                                     WorkingTime =
-                                                                                         ExchangeBoard.Nasdaq.
-                                                                                         WorkingTime
-                                                                                 });
-                          }
+                              Exchange = new Exchange { Name = notExistingExchangeBoardCode + " Exchange", EngName = notExistingExchangeBoardCode + " Exchange", RusName = notExistingExchangeBoardCode + " по-русски"},
+                              Code = notExistingExchangeBoardCode,
+                              IsSupportAtomicReRegister = true,
+                              IsSupportMarketOrders = true,
+                              WorkingTime = ExchangeBoard.Nasdaq.WorkingTime
+                          });
 
 
                           security = EntityFactory.Instance.CreateSecurity(securityId);
@@ -254,7 +235,7 @@ namespace Yahoo
                           security.MinStepSize = 0.01m;
                           security.ShortName = code;
                           security.Code = code;
-                          security.Class = "WLSource";
+                          security.Class = "YahooGoogleSource";
                           security.ExtensionInfo = new Dictionary<object, object>();
  
                         
@@ -275,6 +256,11 @@ namespace Yahoo
 
           }
           
+          public IEnumerable<Security> GetNewSecurities()
+          {
+              return GetSecuritiesFromTxt();
+
+          }
         
       }
 
