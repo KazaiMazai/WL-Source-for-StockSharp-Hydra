@@ -29,7 +29,7 @@ namespace StockSharp.Hydra.WLDataSource
           private DateTime _cachedEndDate;
           private Security _cachedSecurity;
           private TimeSpan _cachedTimeframe;
-          private List<TimeFrameCandle> _cachedCandleList;
+          private List<TimeFrameCandle> _cachedCandleList=null;
           private DateTime _lastUpdate;
 
           private static RoadRunner _roadRunner;
@@ -132,10 +132,34 @@ namespace StockSharp.Hydra.WLDataSource
               if (_errorSecurititesList.Any(c => c == security.Id)) return candleList;
 
 
-              SetRoadRunnerTimeFrame(timeframe);
-              _roadRunner.StartDate = beginDate;
-              _roadRunner.EndDate = endDate;
+              if (_cachedCandleList != null)
+                  if (_cachedCandleList.Count > 0)
+                  {
+                      if (_cachedSecurity.Code == security.Code && _cachedTimeframe == timeframe)
+                          if (DateTime.Now - _lastUpdate < TimeSpan.FromMinutes(30))
+                              if(_cachedBeginDate<=beginDate && _cachedEndDate>=endDate)
+                              return _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate);
+                  }
 
+              SetRoadRunnerTimeFrame(timeframe);
+
+              if(timeframe==TimeSpan.FromDays(1.0))
+              {
+                  _roadRunner.StartDate = beginDate;
+                  _roadRunner.EndDate = DateTime.Today;
+
+              }
+              else
+              {
+                  _roadRunner.StartDate = beginDate;
+
+                  var date2 = beginDate + TimeSpan.FromDays(30);
+                  if(date2>DateTime.Today) date2 = DateTime.Today;
+                  _roadRunner.EndDate = date2;
+              }
+
+                
+             
               var wlBars = _roadRunner.RequestHistoricalData(security.Code);
               for (int i = 0; i < wlBars.Count; i++)
               {
@@ -158,8 +182,21 @@ namespace StockSharp.Hydra.WLDataSource
 
               }
 
+              if (candleList.Count > 0)
+              {
+                  _cachedCandleList = candleList.OrderBy
+                      (c => c.OpenTime).ToList();
+                  _cachedBeginDate = _cachedCandleList.First().OpenTime;
+                  _cachedEndDate = _cachedCandleList.Last().OpenTime;
+                  _cachedSecurity = security;
+                  _cachedTimeframe = timeframe;
+                  _lastUpdate = DateTime.Now;
+                  return _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate);
+              }
 
               return candleList;
+
+
 
           }
 
