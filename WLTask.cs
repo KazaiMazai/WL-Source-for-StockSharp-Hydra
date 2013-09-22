@@ -230,12 +230,7 @@ namespace StockSharp.Hydra.WLDataSource
                             HashSet<DateTime> hashSet = (_candlesSkipDates).SafeAdd(security);
                             if (CanProcess())
                             {
-                                string timeframes = "";
-                                  foreach (TimeSpan tf in source2)
-                                  {
-                                      timeframes += tf.TotalMinutes + " ";
-                                  }
-                                (this).AddInfoLog("Доступные таймфреймы для {0} :{1}".Put(security.Id, timeframes));
+                                
 
                                 foreach (TimeSpan tf in source2)
                                 {
@@ -259,14 +254,15 @@ namespace StockSharp.Hydra.WLDataSource
                                                 if (CanProcess())
                                                 {
                                                     hashSet.Add(dateTime3);
+                                                    (this).AddInfoLog("Старт загрузки {0} свечек за {1} для {2}.",
+                                                                         (object)tf,
+                                                                         (object)dateTime3.ToShortDateString(),
+                                                                         (object)security.Id);
                                                     IEnumerable<Candle> candles = _source.GetCandles(security, dateTime3,
                                                                                                      dateTime3 + TimeSpan.FromHours(23)+TimeSpan.FromMinutes(59)+TimeSpan.FromSeconds(59), tf);
                                                     if (candles.Any())
                                                     {
-                                                        (this).AddInfoLog("Старт загрузки {0} свечек за {1} для {2}.",
-                                                                          (object) tf,
-                                                                          (object) dateTime3.ToShortDateString(),
-                                                                          (object) security.Id);
+                                                       
                                                         SaveCandles(security, tf, candles, true);
                                                         hashSet.Remove(dateTime3);
                                                     }
