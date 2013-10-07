@@ -294,7 +294,7 @@ namespace StockSharp.Hydra.WLDataSource
                           security.MinStepSize = 0.01m;
                           security.ShortName = code;
                           security.Code = code;
-                          security.Class = "YahooGoogleSource";
+                          security.Class = "WLSource";
                           security.ExtensionInfo = new Dictionary<object, object>();
  
                         
