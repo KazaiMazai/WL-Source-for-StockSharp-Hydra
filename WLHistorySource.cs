@@ -129,16 +129,24 @@ namespace StockSharp.Hydra.WLDataSource
 
               var candleList = new List<TimeFrameCandle>();
 
-              if (_errorSecurititesList.Any(c => c == security.Id)) return candleList;
+              if (_errorSecurititesList.Any(c => c == security.Code)) return candleList;
 
 
               if (_cachedCandleList != null)
-                  if (_cachedCandleList.Count > 0)
+                  
                   {
                       if (_cachedSecurity.Code == security.Code && _cachedTimeframe == timeframe)
                           if (DateTime.Now - _lastUpdate < TimeSpan.FromMinutes(30))
                               if(_cachedBeginDate<=beginDate && _cachedEndDate>=endDate)
-                              return _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate);
+                              {
+                                  if (_cachedCandleList.Count == 0) return candleList;
+
+                                  candleList = _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate) as List<TimeFrameCandle>;
+                                  return candleList;
+                                   
+                                 
+                              }
+                              
                   }
 
               SetRoadRunnerTimeFrame(timeframe);
@@ -153,7 +161,7 @@ namespace StockSharp.Hydra.WLDataSource
               {
                   _roadRunner.StartDate = beginDate;
 
-                  var date2 = beginDate + TimeSpan.FromDays(30);
+                  var date2 = endDate + TimeSpan.FromDays(30.0);
                   if(date2>DateTime.Today) date2 = DateTime.Today;
                   _roadRunner.EndDate = date2;
               }
@@ -161,6 +169,12 @@ namespace StockSharp.Hydra.WLDataSource
                 
              
               var wlBars = _roadRunner.RequestHistoricalData(security.Code);
+              if(timeframe == TimeSpan.FromDays(1.0) && wlBars.Count==0)
+              {
+                  
+                  _errorSecurititesList.Add(security.Code);
+              }
+
               for (int i = 0; i < wlBars.Count; i++)
               {
                   var candle = new TimeFrameCandle();
@@ -182,17 +196,25 @@ namespace StockSharp.Hydra.WLDataSource
 
               }
 
+
               if (candleList.Count > 0)
               {
                   _cachedCandleList = candleList.OrderBy
                       (c => c.OpenTime).ToList();
-                  _cachedBeginDate = _cachedCandleList.First().OpenTime;
-                  _cachedEndDate = _cachedCandleList.Last().OpenTime;
+              }
+              else
+              {
+                  _cachedCandleList = candleList;
+              }
+                  
+                  _cachedBeginDate = _roadRunner.StartDate;
+                  _cachedEndDate = _roadRunner.EndDate;
                   _cachedSecurity = security;
                   _cachedTimeframe = timeframe;
                   _lastUpdate = DateTime.Now;
+                  if (candleList.Count > 0)
                   return _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate);
-              }
+            
 
               return candleList;
 
