@@ -129,19 +129,22 @@ namespace StockSharp.Hydra.WLDataSource
 
               var candleList = new List<TimeFrameCandle>();
 
-              if (_errorSecurititesList.Any(c => c == security.Code)) return candleList;
-
+              
 
               if (_cachedCandleList != null)
-                  
                   {
                       if (_cachedSecurity.Code == security.Code && _cachedTimeframe == timeframe)
                           if (DateTime.Now - _lastUpdate < TimeSpan.FromMinutes(30))
                               if(_cachedBeginDate<=beginDate && _cachedEndDate>=endDate)
                               {
-                                  if (_cachedCandleList.Count == 0) return candleList;
+                                  if (_cachedCandleList.Count == 0) return _cachedCandleList;
 
-                                  candleList = _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate) as List<TimeFrameCandle>;
+                                  var candles =
+                                      _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate);
+
+                                  if(candles.Any())
+                                      candleList.AddRange(candles);
+
                                   return candleList;
                                    
                                  
@@ -169,11 +172,7 @@ namespace StockSharp.Hydra.WLDataSource
                 
              
               var wlBars = _roadRunner.RequestHistoricalData(security.Code);
-              if(timeframe == TimeSpan.FromDays(1.0) && wlBars.Count==0)
-              {
-                  
-                  _errorSecurititesList.Add(security.Code);
-              }
+              
 
               for (int i = 0; i < wlBars.Count; i++)
               {
@@ -214,9 +213,9 @@ namespace StockSharp.Hydra.WLDataSource
                   _lastUpdate = DateTime.Now;
                   if (candleList.Count > 0)
                   return _cachedCandleList.Where(c => c.OpenTime >= beginDate && c.OpenTime <= endDate);
-            
 
-              return candleList;
+
+                  return _cachedCandleList;
 
 
 

@@ -80,3 +80,4 @@ F:\проекты\vs2012\WealthLabDataSource\WealthLabDataSource\bin\Release\Act
 F:\проекты\vs2012\WealthLabDataSource\WealthLabDataSource\bin\Release\Microsoft.Practices.Unity.Interception.xml
 F:\проекты\vs2012\WealthLabDataSource\WealthLabDataSource\obj\Release\StockSharp.Hydra.WLTask.dll
 F:\проекты\vs2012\WealthLabDataSource\WealthLabDataSource\obj\Release\StockSharp.Hydra.WLTask.pdb
+F:\проекты\vs2012\WealthLabDataSource\WealthLabDataSource\obj\Release\WealthLabDataSource.csprojResolveAssemblyReference.cache
