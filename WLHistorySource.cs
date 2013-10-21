@@ -177,8 +177,19 @@ namespace StockSharp.Hydra.WLDataSource
               for (int i = 0; i < wlBars.Count; i++)
               {
                   var candle = new TimeFrameCandle();
-                  candle.OpenTime = wlBars.Date[i] - timeframe;
-                  candle.CloseTime = wlBars.Date[i];
+                  if (timeframe==TimeSpan.FromDays(1.0))
+                  {
+                      candle.OpenTime = wlBars.Date[i];
+                      candle.CloseTime = wlBars.Date[i] + timeframe;
+
+                  }
+                  else
+                  {
+                      candle.OpenTime = wlBars.Date[i] - timeframe;
+                      candle.CloseTime = wlBars.Date[i];
+                  }
+
+                  
 
                   candle.OpenPrice = (decimal) Math.Round(wlBars.Open[i], 2, MidpointRounding.ToEven);
                   candle.HighPrice = (decimal)Math.Round(wlBars.High[i], 2, MidpointRounding.ToEven);
