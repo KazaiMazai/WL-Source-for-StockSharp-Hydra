@@ -157,7 +157,7 @@ namespace StockSharp.Hydra.WLDataSource
               if(timeframe==TimeSpan.FromDays(1.0))
               {
                   _roadRunner.StartDate = beginDate;
-                  _roadRunner.EndDate = DateTime.Today;
+                  _roadRunner.EndDate = DateTime.Today+TimeSpan.FromDays(1.0);
 
               }
               else
@@ -165,7 +165,7 @@ namespace StockSharp.Hydra.WLDataSource
                   _roadRunner.StartDate = beginDate;
 
                   var date2 = endDate + TimeSpan.FromDays(30.0);
-                  if(date2>DateTime.Today) date2 = DateTime.Today;
+                  if (date2 >= DateTime.Today) date2 = DateTime.Today + TimeSpan.FromDays(1.0); ;
                   _roadRunner.EndDate = date2;
               }
 
